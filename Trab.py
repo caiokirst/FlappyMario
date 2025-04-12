@@ -1,6 +1,6 @@
 import glfw
 from OpenGL.GL import *
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 import time
 import random
 
@@ -18,9 +18,7 @@ obstacles = []
 obstacle_speed = 200  # velocidade inicial
 score = 0
 game_started = False
-
-obstacle_spacing = 400  # distância inicial entre obstáculos
-min_spacing = 200       # distância mínima entre obstáculos
+gap_between_obstacles = 400  # começa com espaçamento maior
 
 # IDs de textura
 texture_id = None
@@ -47,7 +45,22 @@ def load_texture(path):
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     return texture_id
 
-# Inicialização da janela e contexto OpenGL
+def draw_text(x, y, text, font_size=32):
+    font = ImageFont.truetype("assets/SuperMario256.ttf", font_size)
+    bbox = font.getbbox(text)
+    width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.text((0, 0), text, font=font, fill=(255, 255, 255, 255))
+
+    text_data = image.transpose(Image.FLIP_TOP_BOTTOM).tobytes()
+
+    glRasterPos2f(x, y)
+    glColor3f(1.0, 1.0, 1.0)  # Define a cor branca antes de desenhar
+    glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+# Inicialização da janela
 def init_window():
     if not glfw.init():
         return None
@@ -57,6 +70,7 @@ def init_window():
         return None
     glfw.make_context_current(window)
 
+    # Configuração de projeção para modo ortográfico (2D)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1)
@@ -67,13 +81,12 @@ def init_window():
     glEnable(GL_TEXTURE_2D)
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 
-    # Habilita transparência
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     return window
 
-# Fundo com textura
+# Desenho do fundo e personagens
 def draw_background(texture_id):
     glBindTexture(GL_TEXTURE_2D, texture_id)
     glBegin(GL_QUADS)
@@ -87,7 +100,6 @@ def draw_background(texture_id):
     glVertex2f(0, WINDOW_HEIGHT)
     glEnd()
 
-# Personagem com textura
 def draw_player(texture_id, x, y, width=50, height=50):
     glBindTexture(GL_TEXTURE_2D, texture_id)
     glBegin(GL_QUADS)
@@ -101,7 +113,6 @@ def draw_player(texture_id, x, y, width=50, height=50):
     glVertex2f(x, y + height)
     glEnd()
 
-# Obstáculo com textura de cano
 def draw_obstacle_with_texture(x, y, width, height, texture_id):
     glBindTexture(GL_TEXTURE_2D, texture_id)
     glBegin(GL_QUADS)
@@ -128,7 +139,6 @@ def draw_obstacle_inverted_texture(x, y, width, height, texture_id):
     glVertex2f(x, y + height)
     glEnd()
 
-# Atualização do personagem
 def update_player(delta_time, window):
     global player_pos, player_speed
     if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
@@ -142,18 +152,17 @@ def update_player(delta_time, window):
         player_pos[1] = WINDOW_HEIGHT - 50
         player_speed = 0
 
-# Obstáculos com espaço variável
 def update_obstacles(delta_time):
-    global obstacles, score, obstacle_speed, obstacle_spacing
+    global obstacles, score, obstacle_speed, gap_between_obstacles
 
     for obs in obstacles:
         obs['x'] -= obstacle_speed * delta_time
 
     obstacles[:] = [obs for obs in obstacles if obs['x'] + obs['width'] > 0]
 
-    if not obstacles or (WINDOW_WIDTH - obstacles[-1]['x']) > obstacle_spacing:
+    if not obstacles or (WINDOW_WIDTH - obstacles[-1]['x']) > gap_between_obstacles:
         obstacle_width = 100
-        gap = 200  # espaço fixo entre os canos verticalmente
+        gap = 200
         min_top = 100
         max_top = WINDOW_HEIGHT - gap - 100
         top_y = random.randint(min_top, max_top)
@@ -170,33 +179,20 @@ def update_obstacles(delta_time):
         obstacles.append(new_obs)
         score += 1
 
-        # Aumenta a velocidade com o score, limitado a 400
+        # Aumenta velocidade até 400
         obstacle_speed = min(400, 200 + score * 2)
 
-        # Reduz gradualmente o espaçamento entre obstáculos até o mínimo
-        obstacle_spacing = max(min_spacing, obstacle_spacing - 5)
+        # Diminui espaçamento gradualmente até 200
+        gap_between_obstacles = max(200, 400 - score * 4)
 
-# Colisão
 def check_collision():
-    # Margem de tolerância nas bordas
-    margin = 10  # Ajuste conforme o tamanho da diferença entre textura e sprite
-
-    # Reduz o tamanho do retângulo do Mario
-    player_rect = (
-        player_pos[0] + margin,
-        player_pos[1] + margin,
-        50 - 2 * margin,
-        50 - 2 * margin
-    )
-
+    player_rect = (player_pos[0] + 10, player_pos[1] + 10, 30, 30)  # margem de 10 px
     for obs in obstacles:
         lower = (obs['x'], obs['y_lower'], obs['width'], obs['height_lower'])
         upper = (obs['x'], obs['y_upper'], obs['width'], obs['height_upper'])
-
         if rect_collision(player_rect, lower) or rect_collision(player_rect, upper):
             return True
     return False
-
 
 def rect_collision(r1, r2):
     x1, y1, w1, h1 = r1
@@ -207,14 +203,12 @@ def rect_collision(r1, r2):
 # Principal
 def main():
     global last_time, texture_id, bg_texture_id, cano_texture_id
-    global player_pos, player_speed, obstacles, obstacle_speed, score
-    global game_started, obstacle_spacing
+    global player_pos, player_speed, obstacles, obstacle_speed, score, game_started, gap_between_obstacles
 
     window = init_window()
     if not window:
         return
 
-    # Carregar texturas
     texture_id = load_texture("assets/super_mario.png")
     bg_texture_id = load_texture("assets/fundo_super_mario.jpg")
     cano_texture_id = load_texture("assets/cano_verde.png")
@@ -224,57 +218,67 @@ def main():
         return
 
     while not glfw.window_should_close(window):
-        # Resetar variáveis de jogo
         player_pos = [100, WINDOW_HEIGHT // 2]
         player_speed = 0
         obstacles = []
         obstacle_speed = 200
         score = 0
-        obstacle_spacing = 400
+        gap_between_obstacles = 400
         game_started = False
 
         last_time = time.time()
 
-        # Aguarda o espaço ser pressionado para começar
+        # Tela de introdução
         while not game_started and not glfw.window_should_close(window):
             glClear(GL_COLOR_BUFFER_BIT)
             glLoadIdentity()
             draw_background(bg_texture_id)
-            draw_player(texture_id, player_pos[0], player_pos[1])
+
+            # Exibe a mensagem para pressionar espaço para iniciar
+            draw_text(WINDOW_WIDTH // 2 - 200, WINDOW_HEIGHT // 2, "PRESSIONE ESPACO PARA INICIAR", font_size=24)
+
+            # Exibe o score no canto superior esquerdo (mesmo que o jogo não tenha começado)
+            draw_text(10, WINDOW_HEIGHT - 30, f"Score: {score}", font_size=24)
+
             glfw.swap_buffers(window)
             glfw.poll_events()
 
             if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
                 game_started = True
+                player_pos = [100, WINDOW_HEIGHT // 2]
+                obstacles = []
 
-        # Loop do jogo em execução
-        while game_started and not glfw.window_should_close(window):
+        # Começo do jogo
+        last_time = time.time()
+        while not glfw.window_should_close(window) and not check_collision():
             current_time = time.time()
             delta_time = current_time - last_time
             last_time = current_time
 
-            glfw.poll_events()
-
             update_player(delta_time, window)
             update_obstacles(delta_time)
-            if check_collision():
-                print("Colidiu! Fim de jogo! Score final:", score)
-                time.sleep(1)
-                break
 
             glClear(GL_COLOR_BUFFER_BIT)
             glLoadIdentity()
 
             draw_background(bg_texture_id)
+
+            # Desenha o jogador
             draw_player(texture_id, player_pos[0], player_pos[1])
 
+            # Desenha os obstáculos
             for obs in obstacles:
                 draw_obstacle_with_texture(obs['x'], obs['y_lower'], obs['width'], obs['height_lower'], cano_texture_id)
                 draw_obstacle_inverted_texture(obs['x'], obs['y_upper'], obs['width'], obs['height_upper'], cano_texture_id)
 
+            # Exibe o score no canto superior esquerdo
+            draw_text(10, WINDOW_HEIGHT - 30, f"Score: {score}", font_size=24)
+
             glfw.swap_buffers(window)
+            glfw.poll_events()
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     main()
