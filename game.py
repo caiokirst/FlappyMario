@@ -46,24 +46,6 @@ def load_texture(path):
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     return tex_id
 
-# Função para desenhar texto usando Pillow e glDrawPixels
-def draw_text(x, y, text, font_size=32):
-    # Criação da imagem com o texto
-    font = ImageFont.truetype("assets/SuperMario256.ttf", font_size)
-    bbox = font.getbbox(text)
-    width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    draw.text((0, 0), text, font=font, fill=(255, 255, 255, 255))
-    text_data = image.transpose(Image.FLIP_TOP_BOTTOM).tobytes()
-
-    # Desabilita texturização para garantir cores verdadeiras
-    glDisable(GL_TEXTURE_2D)
-    # Usa glWindowPos2i para definir a posição do texto em coordenadas da janela
-    glWindowPos2i(x, y)
-    glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, text_data)
-    glEnable(GL_TEXTURE_2D)
-
 # Inicialização da janela com configuração 2D
 def init_window():
     if not glfw.init():
