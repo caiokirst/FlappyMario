@@ -1,4 +1,4 @@
-from FlappyMario.game import *
+from game import *
 
 # Desenho do fundo
 def draw_background(tex_id):
