@@ -55,17 +55,17 @@ def desenhar_menu(janela, recursos, estado):
     # Exibir o highscore
     if os.path.exists(ARQUIVO_HIGHSCORE):
         pontuacoes = obter_pontuacoes()
-        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 80, "TOP 3 PONTUACOES:")
+        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2 + 80, "TOP 3 PONTUACOES:")
         if not pontuacoes:
-            desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 50, "Nenhuma registrada ainda")
+            desenhar_texto(LARGURA_JANELA // 2 - 190, ALTURA_JANELA // 2 + 50, "Nenhuma registrada ainda")
         else:
             for i, (valor_pontuacao, data) in enumerate(pontuacoes, start=1):
-                desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + (50 - i * 30),
+                desenhar_texto(LARGURA_JANELA // 2 - 160, ALTURA_JANELA // 2 + (50 - i * 30),
                                f"{i}. {valor_pontuacao} - {data}")
 
-    desenhar_texto(LARGURA_JANELA // 2 - 200, ALTURA_JANELA // 2 - 80, "PRESSIONE ESPACO PARA INICIAR")
-    desenhar_texto(10, ALTURA_JANELA - 30, f"Pontuacao: {estado['pontuacao']}")
-    desenhar_texto(LARGURA_JANELA - 130, ALTURA_JANELA - 30, f"Vidas: {estado['vidas']}")
+    desenhar_texto(LARGURA_JANELA // 2 - 220, ALTURA_JANELA // 2 - 80, "PRESSIONE ESPACO PARA INICIAR")
+    desenhar_texto(10, ALTURA_JANELA - 40, f"Pontuacao: {estado['pontuacao']}")
+    desenhar_texto(LARGURA_JANELA - 140, ALTURA_JANELA - 40, f"Vidas: {estado['vidas']}")
     
     glfw.swap_buffers(janela)
     glfw.poll_events()
@@ -106,9 +106,10 @@ def tratar_colisao(janela, recursos, estado):
         glClear(GL_COLOR_BUFFER_BIT)
         desenhar_fundo(recursos["fundo"])
         desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 40, "VOCE COLIDIU!")
-        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2, f"Vidas restantes: {estado['vidas']}")
-        desenhar_texto(LARGURA_JANELA // 2 - 150, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para continuar")
-        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 - 70, "Pressione ESC para sair")
+        desenhar_texto(LARGURA_JANELA // 2 - 140, ALTURA_JANELA // 2, f"Vidas restantes: {estado['vidas']}")
+        desenhar_texto(LARGURA_JANELA // 2 - 220, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para continuar")
+        desenhar_texto(LARGURA_JANELA // 2 - 160, ALTURA_JANELA // 2 - 70, "Pressione ESC para sair")
+        desenhar_texto(10, ALTURA_JANELA - 40, f"Pontuacao: {estado['pontuacao']}")
         glfw.swap_buffers(janela)
         glfw.poll_events()
 
@@ -131,8 +132,8 @@ def desenhar_jogo(janela, recursos, estado):
                                         obstaculo['largura'], obstaculo['altura_inferior'], recursos["cano"])
         desenhar_obstaculo_invertido_com_textura(obstaculo['x'], obstaculo['y_superior'],
                                                  obstaculo['largura'], obstaculo['altura_superior'], recursos["cano"])
-    desenhar_texto(10, ALTURA_JANELA - 30, f"Pontuacao: {estado['pontuacao']}")
-    desenhar_texto(LARGURA_JANELA - 130, ALTURA_JANELA - 30, f"Vidas: {estado['vidas']}")
+    desenhar_texto(10, ALTURA_JANELA - 40, f"Pontuacao: {estado['pontuacao']}")
+    desenhar_texto(LARGURA_JANELA - 140, ALTURA_JANELA - 40, f"Vidas: {estado['vidas']}")
     glfw.swap_buffers(janela)
     glfw.poll_events()
 
@@ -156,9 +157,9 @@ def tela_fim_de_jogo(janela, recursos, estado):
         glClear(GL_COLOR_BUFFER_BIT)
         desenhar_fundo(recursos["fundo"])
         desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 40, "FIM DE JOGO!")
-        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2, f"PONTUACAO FINAL: {estado['pontuacao']}")
-        desenhar_texto(LARGURA_JANELA // 2 - 160, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para reiniciar")
-        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2 - 80, "Pressione ESC para sair")
+        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2, f"PONTUACAO FINAL: {estado['pontuacao']}")
+        desenhar_texto(LARGURA_JANELA // 2 - 220, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para reiniciar")
+        desenhar_texto(LARGURA_JANELA // 2 - 180, ALTURA_JANELA // 2 - 80, "Pressione ESC para sair")
         glfw.swap_buffers(janela)
         glfw.poll_events()
 

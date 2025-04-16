@@ -1,6 +1,9 @@
 import random
 import glfw
 
+from FlappyMario.configs import GAP_INICIAL, ESPACO_ENTRE_OBSTACULOS
+
+
 def atualizar_jogador(delta_time, janela, pos_jogador, velocidade_jogador, gravidade, velocidade_pulo, altura_janela):
     if glfw.get_key(janela, glfw.KEY_SPACE) == glfw.PRESS:
         velocidade_jogador = velocidade_pulo
@@ -25,10 +28,9 @@ def atualizar_obstaculos(delta_time, obstaculos, velocidade_obstaculo, gap_entre
 
     if not obstaculos or (largura_janela - obstaculos[-1]['x']) > gap_entre_obstaculos:
         largura_obstaculo = 120
-        gap = 120
+        gap = int(GAP_INICIAL)
         altura_minima = 50
         altura_maxima = altura_janela - gap - 50
-
         altura_inferior = random.randint(altura_minima, altura_maxima)
         y_superior = altura_inferior + gap
         altura_superior = altura_janela - y_superior
@@ -49,7 +51,7 @@ def atualizar_obstaculos(delta_time, obstaculos, velocidade_obstaculo, gap_entre
             obs['pontuado'] = True
             pontuacao += 1
             velocidade_obstaculo = min(400, 200 + pontuacao * 4)
-            gap_entre_obstaculos = max(300, 400 - pontuacao * 8)
+            gap_entre_obstaculos = min(ESPACO_ENTRE_OBSTACULOS, ESPACO_ENTRE_OBSTACULOS/1.5+ pontuacao * 4)
 
     return obstaculos, pontuacao, velocidade_obstaculo, gap_entre_obstaculos
 

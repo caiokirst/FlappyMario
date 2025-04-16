@@ -41,16 +41,3 @@ def salvar_pontuacao(nova_pontuacao):
     with open(ARQUIVO_HIGHSCORE, "w") as f:
         for pontuacao, data in pontuacoes:
             f.write(f"{pontuacao},{data}\n")
-
-# Função para exibir as pontuações antes de iniciar o jogo
-def exibir_pontuacoes():
-    pontuacoes = obter_pontuacoes()
-
-    print("\n=== PONTUAÇÕES ===")
-    if not pontuacoes:
-        print("Nenhuma pontuação registrada ainda.")
-    else:
-        for i, (pontuacao, data) in enumerate(pontuacoes, start=1):
-            print(f"{i}. {pontuacao} pontos - {data}")
-
-    print("==================\n")
