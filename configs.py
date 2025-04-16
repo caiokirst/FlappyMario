@@ -1,0 +1,24 @@
+# Janela
+LARGURA_JANELA = 600
+ALTURA_JANELA = 400
+
+# Jogador
+POSICAO_INICIAL_JOGADOR_X = 100
+POSICAO_INICIAL_JOGADOR_Y = ALTURA_JANELA // 2
+GRAVIDADE = -900
+VELOCIDADE_PULO = 250
+
+# Obstáculos
+VELOCIDADE_OBSTACULO = 200
+ESPACO_ENTRE_OBSTACULOS = 400
+
+# Vidas
+VIDAS_INICIAIS = 3
+
+# Texturas
+CAMINHO_TEX_JOGADOR = "assets/mario_mexendo.gif"
+CAMINHO_TEX_FUNDO = "assets/fundo_super_mario.jpg"
+CAMINHO_TEX_CANO = "assets/cano_verde.png"
+
+# Highscore
+ARQUIVO_HIGHSCORE = "assets/highscore.txt"

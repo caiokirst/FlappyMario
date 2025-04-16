@@ -1,272 +1,197 @@
-import glfw
-from OpenGL.GL import *
-from PIL import Image, ImageFont, ImageDraw
-import time
-import random
 from drawers import *
 from highscore import *
-#pip install glfw PyOpenGL Pillow
+from logica import *
+from janela import *
+from texturas import *
+from configs import *
+from OpenGL.GL import *
+import glfw
+import time
+import os
+# pip install glfw PyOpenGL Pillow
 
-# Configurações da janela
-WINDOW_WIDTH = 600
-WINDOW_HEIGHT = 400
+posicao_jogador = [POSICAO_INICIAL_JOGADOR_X, POSICAO_INICIAL_JOGADOR_Y]
+gravidade = GRAVIDADE
+velocidade_pulo = VELOCIDADE_PULO
+velocidade_obstaculo = VELOCIDADE_OBSTACULO
+espaco_entre_obstaculos = ESPACO_ENTRE_OBSTACULOS
+vidas = VIDAS_INICIAIS
 
-# Variáveis do jogo
-player_pos = [100, WINDOW_HEIGHT // 2]
-player_speed = 0
-gravity = -900
-jump_speed = 250
-last_time = 0
-obstacles = []
-obstacle_speed = 200
-score = 0
-game_started = False
-gap_between_obstacles = 400
-
-# IDs de textura
-texture_id = None
-bg_texture_id = None
-cano_texture_id = None
-
-# Carregamento de textura
-def load_texture(path):
-    try:
-        image = Image.open(path)
-    except IOError:
-        print("Erro ao carregar a imagem:", path)
-        return None
-
-    image = image.transpose(Image.FLIP_TOP_BOTTOM)
-    img_data = image.convert("RGBA").tobytes()
-    width, height = image.size
-
-    tex_id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, tex_id)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, img_data)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    return tex_id
-
-# Inicialização da janela com configuração 2D
-def init_window():
-    if not glfw.init():
-        return None
-    window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, "Flappy Mario", None, None)
-    if not window:
-        glfw.terminate()
-        return None
-    glfw.make_context_current(window)
-
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1)
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-
-    glClearColor(0.5, 0.7, 0.9, 1.0)
-    glEnable(GL_TEXTURE_2D)
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
-    glEnable(GL_BLEND)
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-    return window
-
-# Atualiza o jogador
-def update_player(delta_time, window):
-    global player_pos, player_speed
-    if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
-        player_speed = jump_speed
-    player_speed += gravity * delta_time
-    player_pos[1] += player_speed * delta_time
-    if player_pos[1] < 0:
-        player_pos[1] = 0
-        player_speed = 0
-    if player_pos[1] > WINDOW_HEIGHT - 50:
-        player_pos[1] = WINDOW_HEIGHT - 50
-        player_speed = 0
-
-# Atualiza os obstáculos e controla a pontuação
-def update_obstacles(delta_time):
-    global obstacles, score, obstacle_speed, gap_between_obstacles
-
-    # Move obstáculos
-    for obs in obstacles:
-        obs['x'] -= obstacle_speed * delta_time
-
-    # Remove obstáculos fora da tela
-    obstacles[:] = [obs for obs in obstacles if obs['x'] + obs['width'] > 0]
-
-    # Adiciona novo obstáculo com altura variável
-    if not obstacles or (WINDOW_WIDTH - obstacles[-1]['x']) > gap_between_obstacles:
-        obstacle_width = 120  # Reduzi a largura
-        gap = 120  # Menor espaço entre canos
-        min_height = 50
-        max_height = WINDOW_HEIGHT - gap - 50
-
-        height_lower = random.randint(min_height, max_height)
-        y_upper = height_lower + gap
-        height_upper = WINDOW_HEIGHT - y_upper
-
-        new_obs = {
-            'x': WINDOW_WIDTH + 100,
-            'y_upper': y_upper,
-            'height_upper': height_upper,
-            'y_lower': 0,
-            'height_lower': height_lower,
-            'width': obstacle_width,
-            'scored': False
-        }
-        obstacles.append(new_obs)
-
-    # Verifica se o jogador passou por algum obstáculo
-    for obs in obstacles:
-        if not obs['scored'] and player_pos[0] > obs['x'] + obs['width']:
-            obs['scored'] = True
-            score += 1
-            obstacle_speed = min(400, 200 + score * 4)
-            gap_between_obstacles = max(200, 400 - score * 8)
-
-# Checa colisões com os obstáculos
-def check_collision():
-    player_rect = (player_pos[0] + 10, player_pos[1] + 10, 30, 30)  # margem de 10 px
-    for obs in obstacles:
-        lower = (obs['x'], obs['y_lower'], obs['width'], obs['height_lower'])
-        upper = (obs['x'], obs['y_upper'], obs['width'], obs['height_upper'])
-        if (player_rect[0] < lower[0] + lower[2] and player_rect[0] + player_rect[2] > lower[0] and
-            player_rect[1] < lower[1] + lower[3] and player_rect[1] + player_rect[3] > lower[1]) or \
-           (player_rect[0] < upper[0] + upper[2] and player_rect[0] + player_rect[2] > upper[0] and
-            player_rect[1] < upper[1] + upper[3] and player_rect[1] + player_rect[3] > upper[1]):
-            return True
-    return False
-
-# Função principal
-def main():
-    global last_time, texture_id, bg_texture_id, cano_texture_id
-    global player_pos, player_speed, obstacles, obstacle_speed, score, game_started, gap_between_obstacles
-
-    # Garante que o arquivo de highscores exista
-    if not os.path.exists(HIGHSCORE_FILE):
-        with open(HIGHSCORE_FILE, "w") as f:
+def inicializar_highscore():
+    if not os.path.exists(ARQUIVO_HIGHSCORE):
+        with open(ARQUIVO_HIGHSCORE, "w") as arquivo:
             pass
 
-    window = init_window()
-    if not window:
+def carregar_recursos():
+    # Carrega as texturas e retorna seus IDs em um dicionário
+    recursos = {}
+    recursos["jogador"] = carregar_textura(CAMINHO_TEX_JOGADOR)
+    recursos["fundo"] = carregar_textura(CAMINHO_TEX_FUNDO)
+    recursos["cano"] = carregar_textura(CAMINHO_TEX_CANO)
+    if None in recursos.values():
+        return None
+    return recursos
+
+def resetar_estado():
+    # Variáveis de estado do jogo
+    estado = {
+        "posicao_jogador": [POSICAO_INICIAL_JOGADOR_X, ALTURA_JANELA // 2],
+        "velocidade_jogador": 0,
+        "obstaculos": [],
+        "velocidade_obstaculo": VELOCIDADE_OBSTACULO,
+        "pontuacao": 0,
+        "jogo_iniciado": False,
+        "espaco_entre_obstaculos": ESPACO_ENTRE_OBSTACULOS,
+        "vidas": VIDAS_INICIAIS,
+        "ultimo_tempo": time.time()
+    }
+    return estado
+
+def desenhar_menu(janela, recursos, estado):
+    glClear(GL_COLOR_BUFFER_BIT)
+    glLoadIdentity()
+    
+    desenhar_fundo(recursos["fundo"])
+    # Exibir o highscore
+    if os.path.exists(ARQUIVO_HIGHSCORE):
+        pontuacoes = obter_pontuacoes()
+        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 80, "TOP 3 PONTUACOES:")
+        if not pontuacoes:
+            desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 50, "Nenhuma registrada ainda")
+        else:
+            for i, (valor_pontuacao, data) in enumerate(pontuacoes, start=1):
+                desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + (50 - i * 30),
+                               f"{i}. {valor_pontuacao} - {data}")
+
+    desenhar_texto(LARGURA_JANELA // 2 - 200, ALTURA_JANELA // 2 - 80, "PRESSIONE ESPACO PARA INICIAR")
+    desenhar_texto(10, ALTURA_JANELA - 30, f"Pontuacao: {estado['pontuacao']}")
+    desenhar_texto(LARGURA_JANELA - 130, ALTURA_JANELA - 30, f"Vidas: {estado['vidas']}")
+    
+    glfw.swap_buffers(janela)
+    glfw.poll_events()
+
+def menu_inicial(janela, recursos, estado):
+    while not estado["jogo_iniciado"] and not glfw.window_should_close(janela):
+        desenhar_menu(janela, recursos, estado)
+        # Inicia o jogo se a tecla espaço for pressionada
+        if glfw.get_key(janela, glfw.KEY_SPACE) == glfw.PRESS:
+            estado["jogo_iniciado"] = True
+            # Reseta a posição e os obstáculos
+            estado["posicao_jogador"] = [POSICAO_INICIAL_JOGADOR_X, ALTURA_JANELA // 2]
+            estado["obstaculos"] = []
+            estado["ultimo_tempo"] = time.time()
+
+def atualizar_estado_jogo(janela, estado):
+    tempo_atual = time.time()
+    delta_tempo = tempo_atual - estado["ultimo_tempo"]
+    estado["ultimo_tempo"] = tempo_atual
+
+    estado["posicao_jogador"], estado["velocidade_jogador"] = atualizar_jogador(
+        delta_tempo, janela, estado["posicao_jogador"], estado["velocidade_jogador"],
+        GRAVIDADE, VELOCIDADE_PULO, ALTURA_JANELA
+    )
+    
+    estado["obstaculos"], estado["pontuacao"], estado["velocidade_obstaculo"], estado["espaco_entre_obstaculos"] = atualizar_obstaculos(
+        delta_tempo, estado["obstaculos"], estado["velocidade_obstaculo"], estado["espaco_entre_obstaculos"],
+        LARGURA_JANELA, ALTURA_JANELA, estado["posicao_jogador"], estado["pontuacao"]
+    )
+
+def tratar_colisao(janela, recursos, estado):
+    estado["vidas"] -= 1
+    if estado["vidas"] <= 0:
+        estado["jogo_iniciado"] = False
+        return
+    # Tela de colisão, onde o jogador pode continuar ou sair
+    while not glfw.window_should_close(janela):
+        glClear(GL_COLOR_BUFFER_BIT)
+        desenhar_fundo(recursos["fundo"])
+        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 40, "VOCE COLIDIU!")
+        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2, f"Vidas restantes: {estado['vidas']}")
+        desenhar_texto(LARGURA_JANELA // 2 - 150, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para continuar")
+        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 - 70, "Pressione ESC para sair")
+        glfw.swap_buffers(janela)
+        glfw.poll_events()
+
+        if glfw.get_key(janela, glfw.KEY_SPACE) == glfw.PRESS:
+            estado["posicao_jogador"] = [POSICAO_INICIAL_JOGADOR_X, (ALTURA_JANELA // 2) - 25]
+            estado["velocidade_jogador"] = 0
+            estado["obstaculos"] = []
+            break
+        if glfw.get_key(janela, glfw.KEY_ESCAPE) == glfw.PRESS:
+            glfw.set_window_should_close(janela, True)
+            break
+
+def desenhar_jogo(janela, recursos, estado):
+    glClear(GL_COLOR_BUFFER_BIT)
+    glLoadIdentity()
+    desenhar_fundo(recursos["fundo"])
+    desenhar_jogador(recursos["jogador"], estado["posicao_jogador"][0], estado["posicao_jogador"][1])
+    for obstaculo in estado["obstaculos"]:
+        desenhar_obstaculo_com_textura(obstaculo['x'], obstaculo['y_inferior'],
+                                        obstaculo['largura'], obstaculo['altura_inferior'], recursos["cano"])
+        desenhar_obstaculo_invertido_com_textura(obstaculo['x'], obstaculo['y_superior'],
+                                                 obstaculo['largura'], obstaculo['altura_superior'], recursos["cano"])
+    desenhar_texto(10, ALTURA_JANELA - 30, f"Pontuacao: {estado['pontuacao']}")
+    desenhar_texto(LARGURA_JANELA - 130, ALTURA_JANELA - 30, f"Vidas: {estado['vidas']}")
+    glfw.swap_buffers(janela)
+    glfw.poll_events()
+
+def loop_do_jogo(janela, recursos, estado):
+    while not glfw.window_should_close(janela) and estado["jogo_iniciado"]:
+        atualizar_estado_jogo(janela, estado)
+        if verificar_colisao(estado["posicao_jogador"], estado["obstaculos"]):
+            tratar_colisao(janela, recursos, estado)
+            # Se o jogador perdeu todas as vidas, sai do loop do jogo
+            if estado["vidas"] <= 0:
+                estado["jogo_iniciado"] = False
+                break
+
+        desenhar_jogo(janela, recursos, estado)
+
+def tela_fim_de_jogo(janela, recursos, estado):
+    # Salva pontuação se for o caso
+    if estado["vidas"] <= 0 and estado["pontuacao"] > 0:
+        salvar_pontuacao(estado["pontuacao"])
+    while not estado["jogo_iniciado"] and not glfw.window_should_close(janela) and estado["vidas"] <= 0:
+        glClear(GL_COLOR_BUFFER_BIT)
+        desenhar_fundo(recursos["fundo"])
+        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2 + 40, "FIM DE JOGO!")
+        desenhar_texto(LARGURA_JANELA // 2 - 100, ALTURA_JANELA // 2, f"PONTUACAO FINAL: {estado['pontuacao']}")
+        desenhar_texto(LARGURA_JANELA // 2 - 160, ALTURA_JANELA // 2 - 40, "Pressione ESPACO para reiniciar")
+        desenhar_texto(LARGURA_JANELA // 2 - 120, ALTURA_JANELA // 2 - 80, "Pressione ESC para sair")
+        glfw.swap_buffers(janela)
+        glfw.poll_events()
+
+        if glfw.get_key(janela, glfw.KEY_SPACE) == glfw.PRESS:
+            estado["jogo_iniciado"] = True
+        elif glfw.get_key(janela, glfw.KEY_ESCAPE) == glfw.PRESS:
+            glfw.set_window_should_close(janela, True)
+
+def main():
+    # Inicialização geral
+    inicializar_highscore()
+    janela = inicializar_janela(LARGURA_JANELA, ALTURA_JANELA)
+    if not janela:
         return
 
-    texture_id = load_texture("assets/mario_mexendo.gif")
-    bg_texture_id = load_texture("assets/fundo_super_mario.jpg")
-    cano_texture_id = load_texture("assets/cano_verde.png")
-
-    if texture_id is None or bg_texture_id is None or cano_texture_id is None:
+    recursos = carregar_recursos()
+    if recursos is None:
         glfw.terminate()
         return
 
-    while not glfw.window_should_close(window):
-        # Reinicia as variáveis para cada partida
-        player_pos = [100, WINDOW_HEIGHT // 2]
-        player_speed = 0
-        obstacles = []
-        obstacle_speed = 200
-        score = 0
-        gap_between_obstacles = 400
-        game_started = False
-
-        last_time = time.time()
-
-        # Tela de introdução
-        while not game_started and not glfw.window_should_close(window):
-            glClear(GL_COLOR_BUFFER_BIT)
-            glLoadIdentity()
-            draw_background(bg_texture_id)
-
-            # Exibe highscores se o arquivo existir
-            if os.path.exists(HIGHSCORE_FILE):
-                highscores = get_highscores()
-                draw_text(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 + 80, "TOP 3 SCORES:", font_size=24)
-
-                if not highscores:
-                    draw_text(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 + 50, "Nenhum registrado ainda", font_size=20)
-                else:
-                    for i, (score_value, date) in enumerate(highscores, start=1):
-                        draw_text(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 + (50 - i * 30),
-                                  f"{i}. {score_value} - {date}", font_size=20)
-
-            draw_text(WINDOW_WIDTH // 2 - 200, WINDOW_HEIGHT // 2 - 80, "PRESSIONE ESPACO PARA INICIAR", font_size=24)
-            draw_text(10, WINDOW_HEIGHT - 30, f"Score: {score}", font_size=24)
-
-            glfw.swap_buffers(window)
-            glfw.poll_events()
-
-            if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
-                game_started = True
-                player_pos = [100, WINDOW_HEIGHT // 2]
-                obstacles = []
-                last_time = time.time()
-
-        # Loop do jogo em andamento
-        while not glfw.window_should_close(window) and game_started:
-            current_time = time.time()
-            delta_time = current_time - last_time
-            last_time = current_time
-
-            update_player(delta_time, window)
-            update_obstacles(delta_time)
-
-            if check_collision():
-                game_started = False
-
-            glClear(GL_COLOR_BUFFER_BIT)
-            glLoadIdentity()
-            draw_background(bg_texture_id)
-            draw_player(texture_id, player_pos[0], player_pos[1])
-            for obs in obstacles:
-                draw_obstacle_with_texture(obs['x'], obs['y_lower'], obs['width'], obs['height_lower'], cano_texture_id)
-                draw_obstacle_inverted_texture(obs['x'], obs['y_upper'], obs['width'], obs['height_upper'], cano_texture_id)
-
-            glPushMatrix()
-            glMatrixMode(GL_PROJECTION)
-            glPushMatrix()
-            glLoadIdentity()
-            glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1)
-            glMatrixMode(GL_MODELVIEW)
-            glPushMatrix()
-            glLoadIdentity()
-            glColor3f(1.0, 1.0, 1.0)
-            draw_text(10, WINDOW_HEIGHT - 30, f"Score: {score}", font_size=24)
-            glPopMatrix()
-            glMatrixMode(GL_PROJECTION)
-            glPopMatrix()
-            glMatrixMode(GL_MODELVIEW)
-            glPopMatrix()
-
-            glfw.swap_buffers(window)
-            glfw.poll_events()
-
-        # Tela de Game Over
-        if score > 0:
-            save_highscore(score)
-
-        while not game_started and not glfw.window_should_close(window):
-            glClear(GL_COLOR_BUFFER_BIT)
-            draw_background(bg_texture_id)
-
-            draw_text(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 + 40, "GAME OVER!", font_size=32)
-            draw_text(WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2, f"Score final: {score}", font_size=24)
-            draw_text(WINDOW_WIDTH // 2 - 160, WINDOW_HEIGHT // 2 - 40, "Pressione ESPACO para reiniciar", font_size=20)
-            draw_text(WINDOW_WIDTH // 2 - 120, WINDOW_HEIGHT // 2 - 80, "Pressione ESC para sair", font_size=20)
-
-            glfw.swap_buffers(window)
-            glfw.poll_events()
-
-            if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
-                game_started = True
-            elif glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
-                glfw.set_window_should_close(window, True)
+    while not glfw.window_should_close(janela):
+        estado = resetar_estado()
+        
+        # Tela de Menu Inicial
+        menu_inicial(janela, recursos, estado)
+        
+        # Loop principal do jogo
+        loop_do_jogo(janela, recursos, estado)
+        
+        # Tela de fim de jogo
+        tela_fim_de_jogo(janela, recursos, estado)
 
     glfw.terminate()
-
-
 
 if __name__ == "__main__":
     main()

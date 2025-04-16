@@ -1,56 +1,56 @@
 import os
 import time
 
-HIGHSCORE_FILE = "assets/highscore.txt"
+ARQUIVO_HIGHSCORE = "assets/highscore.txt"
 
 # Função para ler os três maiores scores do arquivo
-def get_highscores():
-    if not os.path.exists(HIGHSCORE_FILE):
+def obter_pontuacoes():
+    if not os.path.exists(ARQUIVO_HIGHSCORE):
         return []  # Se o arquivo não existir, retorna uma lista vazia
 
-    highscores = []
-    with open(HIGHSCORE_FILE, "r") as f:
-        for line in f:
-            score, date = line.strip().split(",")
-            highscores.append((int(score), date))
+    pontuacoes = []
+    with open(ARQUIVO_HIGHSCORE, "r") as f:
+        for linha in f:
+            pontuacao, data = linha.strip().split(",")
+            pontuacoes.append((int(pontuacao), data))
 
-    # Retorna os scores ordenados do maior para o menor
-    return sorted(highscores, reverse=True, key=lambda x: x[0])
+    # Retorna as pontuações ordenadas do maior para o menor
+    return sorted(pontuacoes, reverse=True, key=lambda x: x[0])
 
-# Função para salvar um novo highscore
-def save_highscore(new_score):
-    highscores = get_highscores()
+# Função para salvar uma nova pontuação
+def salvar_pontuacao(nova_pontuacao):
+    pontuacoes = obter_pontuacoes()
     
     # Obter a data atual
-    current_date = time.strftime("%d/%m/%Y %H:%M")
+    data_atual = time.strftime("%d/%m/%Y %H:%M")
     
     # Verifica se há menos de 3 registros
-    if len(highscores) < 3:
-        highscores.append((new_score, current_date))
+    if len(pontuacoes) < 3:
+        pontuacoes.append((nova_pontuacao, data_atual))
     else:
         # Se for maior que algum, substitui o menor
-        min_score = min(highscores, key=lambda x: x[0])
-        if new_score > min_score[0]:
-            highscores.remove(min_score)
-            highscores.append((new_score, current_date))
+        pontuacao_minima = min(pontuacoes, key=lambda x: x[0])
+        if nova_pontuacao > pontuacao_minima[0]:
+            pontuacoes.remove(pontuacao_minima)
+            pontuacoes.append((nova_pontuacao, data_atual))
 
-    # Ordena novamente e mantém apenas os 3 maiores
-    highscores = sorted(highscores, reverse=True, key=lambda x: x[0])[:3]
+    # Ordena novamente e mantém apenas as 3 maiores
+    pontuacoes = sorted(pontuacoes, reverse=True, key=lambda x: x[0])[:3]
 
-    # Salva os três maiores no arquivo
-    with open(HIGHSCORE_FILE, "w") as f:
-        for score, date in highscores:
-            f.write(f"{score},{date}\n")
+    # Salva as três maiores no arquivo
+    with open(ARQUIVO_HIGHSCORE, "w") as f:
+        for pontuacao, data in pontuacoes:
+            f.write(f"{pontuacao},{data}\n")
 
-# Função para exibir os highscores antes de iniciar o jogo
-def display_highscores():
-    highscores = get_highscores()
+# Função para exibir as pontuações antes de iniciar o jogo
+def exibir_pontuacoes():
+    pontuacoes = obter_pontuacoes()
 
-    print("\n=== HIGHSCORES ===")
-    if not highscores:
-        print("Nenhum highscore registrado ainda.")
+    print("\n=== PONTUAÇÕES ===")
+    if not pontuacoes:
+        print("Nenhuma pontuação registrada ainda.")
     else:
-        for i, (score, date) in enumerate(highscores, start=1):
-            print(f"{i}. {score} pontos - {date}")
+        for i, (pontuacao, data) in enumerate(pontuacoes, start=1):
+            print(f"{i}. {pontuacao} pontos - {data}")
 
     print("==================\n")
