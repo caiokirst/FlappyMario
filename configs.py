@@ -1,8 +1,8 @@
-# Janela
+# Configurações da Janela
 LARGURA_JANELA = 800
 ALTURA_JANELA = 600
 
-# Jogador
+# Configurações do Jogador
 ALTURA_MARIO = ALTURA_JANELA * 0.1
 LARGURA_MARIO = LARGURA_JANELA * 0.075
 POSICAO_INICIAL_JOGADOR_X = 100
@@ -10,25 +10,25 @@ POSICAO_INICIAL_JOGADOR_Y = ALTURA_JANELA // 2
 GRAVIDADE = -(ALTURA_JANELA * 1.5)
 VELOCIDADE_PULO = ALTURA_JANELA / 2.25
 
-# Obstáculos
+# Configurações dos Obstáculos
 VELOCIDADE_OBSTACULO = 200
 ESPACO_ENTRE_OBSTACULOS = ALTURA_JANELA
 GAP_INICIAL = ALTURA_JANELA * 0.2
 LARGURA_OBSTACULO = LARGURA_JANELA * 0.2
 ALTURA_OBSTACULO = ALTURA_JANELA * 0.2
 
-# Vidas
+# Vidas do Jogador
 VIDAS_INICIAIS = 3
 
-# Texturas
+# Caminhos das Texturas
 CAMINHO_TEX_JOGADOR = "assets/mario_mexendo.gif"
 CAMINHO_TEX_FUNDO = "assets/fundo_super_mario.png"
 CAMINHO_TEX_CANO = "assets/cano_verde.png"
 
-# Highscore
+# Configurações do Highscore
 ARQUIVO_HIGHSCORE = "assets/highscore.txt"
 
-# Texto
+# Configurações do Texto
 TAMANHO_FONTE = 24
 COR_TEXTO = (255, 255, 255, 255)
 FUNDO = False
