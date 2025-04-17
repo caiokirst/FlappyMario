@@ -1,8 +1,9 @@
 from PIL import Image, ImageDraw, ImageFont
-from game import *
 from configs import *
 from OpenGL.GL import *
+from highscore import *
 import os
+import glfw
 
 # --- Funções de Desenho 2D ---
 

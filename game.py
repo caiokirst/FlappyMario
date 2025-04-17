@@ -4,7 +4,6 @@ from janela import *
 from logica import *
 from drawers import *
 from highscore import *
-
 # pip install glfw PyOpenGL Pillow
 
 # Variáveis globais
