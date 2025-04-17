@@ -1,7 +1,7 @@
 import random
 import glfw
 
-from FlappyMario.configs import GAP_INICIAL, ESPACO_ENTRE_OBSTACULOS
+from configs import *
 
 
 def atualizar_jogador(delta_time, janela, pos_jogador, velocidade_jogador, gravidade, velocidade_pulo, altura_janela):
