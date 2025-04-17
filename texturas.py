@@ -19,3 +19,15 @@ def carregar_textura(caminho):
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     return id_textura
+
+def carregar_frames_gif(CAMINHO_TEX_JOGADOR):
+    gif = Image.open(CAMINHO_TEX_JOGADOR)
+    frames = []
+    try:
+        while True:
+            frame = gif.copy().convert("RGBA")
+            frames.append(frame)
+            gif.seek(gif.tell() + 1)
+    except EOFError:
+        pass
+    return frames
