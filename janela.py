@@ -1,7 +1,6 @@
 from OpenGL.GL import *
 import glfw
 
-
 def inicializar_janela(LARGURA_JANELA, ALTURA_JANELA, titulo="Flappy Mario"):
     if not glfw.init():
         return None

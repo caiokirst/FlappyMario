@@ -4,8 +4,14 @@ import time
 
 # --- Funções de Manipulação de Pontuação ---
 
+# Função para inicializar o arquivo de highscore
+def criar_arquivo_highscore():
+    if not os.path.exists(ARQUIVO_HIGHSCORE):
+        with open(ARQUIVO_HIGHSCORE, "w") as arquivo:
+            pass
+
 # Função para ler as três maiores pontuações do arquivo
-def obter_pontuacoes():
+def get_pontuacoes():
     # Verifica se o arquivo de pontuação existe
     if not os.path.exists(ARQUIVO_HIGHSCORE):
         return []  # Se o arquivo não existir, retorna uma lista vazia
@@ -24,7 +30,7 @@ def obter_pontuacoes():
 # Função para salvar uma nova pontuação
 def salvar_pontuacao(nova_pontuacao):
     # Obtem as pontuações atuais
-    pontuacoes = obter_pontuacoes()
+    pontuacoes = get_pontuacoes()
     
     # Obtém a data atual no formato "dia/mês/ano hora:minuto"
     data_atual = time.strftime("%d/%m/%Y %H:%M")
