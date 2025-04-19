@@ -5,6 +5,9 @@ from highscore import *
 import os
 import glfw
 
+from texturas import carregar_textura_transparente
+
+
 # --- Funções de Desenho 2D ---
 
 # Desenha o fundo com textura
@@ -141,19 +144,36 @@ def desenhar_jogo(janela, recursos, estado):
     glClear(GL_COLOR_BUFFER_BIT)
     glLoadIdentity()
     desenhar_fundo(recursos["fundo"])
+
+    # Piscando quando invencível
+    if estado["invencivel"]:
+        tempo_decorrido = time.time() - estado["tempo_invencivel"]
+        if tempo_decorrido > 2:  # Tempo de invencibilidade em segundos
+            estado["invencivel"] = False
+            alpha = 1.0
+        else:
+            alpha = 0.3 if int(tempo_decorrido * 10) % 2 == 0 else 1.0
+    else:
+        alpha = 1.0
+
+    # Recarregar a textura com a transparência adequada
+    recursos["jogador"] = carregar_textura_transparente(CAMINHO_TEX_JOGADOR, alpha)
+
+    # Desenha o jogador (com transparência se invencível)
     desenhar_jogador(recursos["jogador"], estado["posicao_jogador"][0], estado["posicao_jogador"][1])
 
     for obstaculo in estado["obstaculos"]:
         desenhar_obstaculo_com_textura(obstaculo['x'], obstaculo['y_inferior'],
-                                        obstaculo['largura'], obstaculo['altura_inferior'], recursos["cano"])
+                                       obstaculo['largura'], obstaculo['altura_inferior'], recursos["cano"])
         desenhar_obstaculo_invertido_com_textura(obstaculo['x'], obstaculo['y_superior'],
                                                  obstaculo['largura'], obstaculo['altura_superior'], recursos["cano"])
 
     desenhar_texto(10, ALTURA_JANELA - 40, f"Pontuacao: {estado['pontuacao']}")
     desenhar_texto(LARGURA_JANELA - 140, ALTURA_JANELA - 40, f"Vidas: {estado['vidas']}")
-    
+
     glfw.swap_buffers(janela)
     glfw.poll_events()
+
 
 # Função para mostrar a tela de fim de jogo e salvar a pontuação, se necessário
 def desenhar_tela_fim(janela, recursos, estado):

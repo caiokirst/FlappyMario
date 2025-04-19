@@ -79,14 +79,22 @@ def verificar_colisao(pos_jogador, obstaculos):
 
 # Função para tratar a colisão entre o jogador e os obstáculos
 def tratar_colisao(janela, recursos, estado):
-    estado["vidas"] -= 1
+    estado["vidas"] -= 1  # Diminui uma vida ao colidir
+
+    # Verifica se o jogo deve ser encerrado
     if estado["vidas"] <= 0:
         estado["jogo_iniciado"] = False
         return
 
+    # Reseta a posição do jogador
     estado["posicao_jogador"] = [POSICAO_INICIAL_JOGADOR_X, (ALTURA_JANELA // 2) - 25]
     estado["velocidade_jogador"] = 0
     estado["obstaculos"] = []
+
+    # Ativa invencibilidade e marca o tempo
+    estado["invencivel"] = True
+    estado["tempo_invencivel"] = time.time()
+
 
 # Função para atualizar o estado do jogo (posição do jogador, obstáculos, etc.)
 def atualizar_estado_jogo(janela, estado):
@@ -115,18 +123,38 @@ def resetar_estado():
         "jogo_iniciado": False,
         "espaco_entre_obstaculos": ESPACO_ENTRE_OBSTACULOS,
         "vidas": VIDAS_INICIAIS,
-        "ultimo_tempo": time.time()
+        "ultimo_tempo": time.time(),
+        "invencivel": False,  # Controla se o jogador está invencível
+        "tempo_invencivel": 0  # Marca o tempo de início da invencibilidade
     }
     return estado
 
 # Função principal do loop de jogo
 def loop_do_jogo(janela, recursos, estado):
     while not glfw.window_should_close(janela) and estado["jogo_iniciado"]:
+        # Atualiza o estado do jogo
         atualizar_estado_jogo(janela, estado)
+
+        # Verifica se o Mario está invencível e controla o tempo de invencibilidade
+        if estado["invencivel"]:
+            tempo_decorrido = time.time() - estado["tempo_invencivel"]
+            if tempo_decorrido > 2:  # Tempo de invencibilidade de 2 segundos
+                estado["invencivel"] = False
+
+        # Desenha o jogo (com ou sem invencibilidade)
         desenhar_jogo(janela, recursos, estado)
 
+        # Verifica se houve colisão
         if verificar_colisao(estado["posicao_jogador"], estado["obstaculos"]):
             tratar_colisao(janela, recursos, estado)
+
+            # Se o Mario ainda tem vidas, ativa a invencibilidade
+            if estado["vidas"] > 0 and not estado["invencivel"]:
+                estado["invencivel"] = True
+                estado["tempo_invencivel"] = time.time()
+
             if estado["vidas"] <= 0:
                 estado["jogo_iniciado"] = False
                 break
+
+
