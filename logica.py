@@ -6,7 +6,6 @@ from drawers import desenhar_jogo
 
 # --- Funções de Atualização do Estado e Jogo ---
 
-# Função para atualizar o jogador, incluindo gravidade e pulo
 def atualizar_jogador(delta_time, janela, pos_jogador, velocidade_jogador, gravidade, velocidade_pulo, altura_janela):
     if glfw.get_key(janela, glfw.KEY_SPACE) == glfw.PRESS:
         velocidade_jogador = velocidade_pulo
@@ -24,7 +23,6 @@ def atualizar_jogador(delta_time, janela, pos_jogador, velocidade_jogador, gravi
 
     return pos_jogador, velocidade_jogador
 
-# Função para atualizar os obstáculos, gerenciar a pontuação e ajustar a dificuldade
 def atualizar_obstaculos(delta_time, obstaculos, velocidade_obstaculo, gap_entre_obstaculos,
                           largura_janela, altura_janela, pos_jogador, pontuacao):
     for obs in obstaculos:
@@ -61,10 +59,9 @@ def atualizar_obstaculos(delta_time, obstaculos, velocidade_obstaculo, gap_entre
 
     return obstaculos, pontuacao, velocidade_obstaculo, gap_entre_obstaculos
 
-# Função para verificar colisões entre o jogador e os obstáculos
 def verificar_colisao(pos_jogador, obstaculos):
     retangulo_jogador = (pos_jogador[0] + 5, pos_jogador[1] + 5, 30, 30)
-    
+
     for obs in obstaculos:
         inferior = (obs['x'], obs['y_inferior'], obs['largura'], obs['altura_inferior'])
         superior = (obs['x'], obs['y_superior'], obs['largura'], obs['altura_superior'])
@@ -77,26 +74,22 @@ def verificar_colisao(pos_jogador, obstaculos):
 
     return False
 
-# Função para tratar a colisão entre o jogador e os obstáculos
 def tratar_colisao(janela, recursos, estado):
-    estado["vidas"] -= 1  # Diminui uma vida ao colidir
+    estado["vidas"] -= 1
 
-    # Verifica se o jogo deve ser encerrado
     if estado["vidas"] <= 0:
         estado["jogo_iniciado"] = False
         return
 
-    # Reseta a posição do jogador
     estado["posicao_jogador"] = [POSICAO_INICIAL_JOGADOR_X, (ALTURA_JANELA // 2) - 25]
     estado["velocidade_jogador"] = 0
-    estado["obstaculos"] = []
 
-    # Ativa invencibilidade e marca o tempo
+    # Removido: NÃO limpar os obstáculos
+    # estado["obstaculos"] = []
+
     estado["invencivel"] = True
     estado["tempo_invencivel"] = time.time()
 
-
-# Função para atualizar o estado do jogo (posição do jogador, obstáculos, etc.)
 def atualizar_estado_jogo(janela, estado):
     tempo_atual = time.time()
     delta_tempo = tempo_atual - estado["ultimo_tempo"]
@@ -106,13 +99,12 @@ def atualizar_estado_jogo(janela, estado):
         delta_tempo, janela, estado["posicao_jogador"], estado["velocidade_jogador"],
         GRAVIDADE, VELOCIDADE_PULO, ALTURA_JANELA
     )
-    
+
     estado["obstaculos"], estado["pontuacao"], estado["velocidade_obstaculo"], estado["espaco_entre_obstaculos"] = atualizar_obstaculos(
         delta_tempo, estado["obstaculos"], estado["velocidade_obstaculo"], estado["espaco_entre_obstaculos"],
         LARGURA_JANELA, ALTURA_JANELA, estado["posicao_jogador"], estado["pontuacao"]
     )
 
-# Função para resetar o estado do jogo
 def resetar_estado():
     estado = {
         "posicao_jogador": [POSICAO_INICIAL_JOGADOR_X, ALTURA_JANELA // 2],
@@ -124,37 +116,27 @@ def resetar_estado():
         "espaco_entre_obstaculos": ESPACO_ENTRE_OBSTACULOS,
         "vidas": VIDAS_INICIAIS,
         "ultimo_tempo": time.time(),
-        "invencivel": False,  # Controla se o jogador está invencível
-        "tempo_invencivel": 0  # Marca o tempo de início da invencibilidade
+        "invencivel": False,
+        "tempo_invencivel": 0
     }
     return estado
 
-# Função principal do loop de jogo
 def loop_do_jogo(janela, recursos, estado):
     while not glfw.window_should_close(janela) and estado["jogo_iniciado"]:
-        # Atualiza o estado do jogo
         atualizar_estado_jogo(janela, estado)
 
-        # Verifica se o Mario está invencível e controla o tempo de invencibilidade
+        # Atualiza tempo de invencibilidade
         if estado["invencivel"]:
             tempo_decorrido = time.time() - estado["tempo_invencivel"]
-            if tempo_decorrido > 2:  # Tempo de invencibilidade de 2 segundos
+            if tempo_decorrido > 2:
                 estado["invencivel"] = False
 
-        # Desenha o jogo (com ou sem invencibilidade)
         desenhar_jogo(janela, recursos, estado)
 
-        # Verifica se houve colisão
-        if verificar_colisao(estado["posicao_jogador"], estado["obstaculos"]):
+        # Só verifica colisão se não estiver invencível
+        if not estado["invencivel"] and verificar_colisao(estado["posicao_jogador"], estado["obstaculos"]):
             tratar_colisao(janela, recursos, estado)
-
-            # Se o Mario ainda tem vidas, ativa a invencibilidade
-            if estado["vidas"] > 0 and not estado["invencivel"]:
-                estado["invencivel"] = True
-                estado["tempo_invencivel"] = time.time()
 
             if estado["vidas"] <= 0:
                 estado["jogo_iniciado"] = False
                 break
-
-
