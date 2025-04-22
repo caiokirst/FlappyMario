@@ -19,11 +19,20 @@ ALTURA_OBSTACULO = ALTURA_JANELA * 0.2
 
 # Vidas do Jogador
 VIDAS_INICIAIS = 3
+VIDAS_MAX = 5
 
 # Caminhos das Texturas
 CAMINHO_TEX_JOGADOR = "assets/mario_mexendo.gif"
 CAMINHO_TEX_FUNDO = "assets/fundo_super_mario.png"
 CAMINHO_TEX_CANO = "assets/cano_verde.png"
+CAMINHO_TEX_CORACAO = "assets/coracao.png"
+
+# Spawn de corações
+TEMPO_ENTRE_CORACOES = 10   # em segundos
+TAMANHO_CORACAO      = 40   # em pixels
+
+# Margem do topo e do chão para spawn de corações
+MARGEM_SPAWN_CORACAO = 100
 
 # Configurações do Highscore
 ARQUIVO_HIGHSCORE = "assets/highscore.txt"

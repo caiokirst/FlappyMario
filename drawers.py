@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from highscore import *
 import os
 import glfw
+import time
 
 from texturas import carregar_textura_transparente
 
@@ -48,6 +49,16 @@ def desenhar_obstaculo_invertido_com_textura(x, y, largura, altura, tex_id):
     glTexCoord2f(1, 1); glVertex2f(x + largura, y)
     glTexCoord2f(1, 0); glVertex2f(x + largura, y + altura)
     glTexCoord2f(0, 0); glVertex2f(x, y + altura)
+    glEnd()
+
+def desenhar_coracao(tex_id, x, y):
+    size = TAMANHO_CORACAO
+    glBindTexture(GL_TEXTURE_2D, tex_id)
+    glBegin(GL_QUADS)
+    glTexCoord2f(0, 0); glVertex2f(x,       y)
+    glTexCoord2f(1, 0); glVertex2f(x+size,  y)
+    glTexCoord2f(1, 1); glVertex2f(x+size,  y+size)
+    glTexCoord2f(0, 1); glVertex2f(x,       y+size)
     glEnd()
 
 # --- Funções de Desenho de Texto ---
@@ -167,6 +178,9 @@ def desenhar_jogo(janela, recursos, estado):
                                        obstaculo['largura'], obstaculo['altura_inferior'], recursos["cano"])
         desenhar_obstaculo_invertido_com_textura(obstaculo['x'], obstaculo['y_superior'],
                                                  obstaculo['largura'], obstaculo['altura_superior'], recursos["cano"])
+
+    for cor in estado["coracoes"]:
+        desenhar_coracao(recursos["coracao"], cor["x"], cor["y"])
 
     desenhar_texto(10, ALTURA_JANELA - 40, f"Pontuacao: {estado['pontuacao']}")
     desenhar_texto(LARGURA_JANELA - 140, ALTURA_JANELA - 40, f"Vidas: {estado['vidas']}")

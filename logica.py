@@ -90,6 +90,38 @@ def tratar_colisao(janela, recursos, estado):
     estado["invencivel"] = True
     estado["tempo_invencivel"] = time.time()
 
+def atualizar_coracoes(delta_tempo, estado):
+    """Spawn, move e detecta colisões com corações."""
+    agora = time.time()
+    # Spawn periódico
+    if agora - estado["ultimo_spawn_coracao"] > TEMPO_ENTRE_CORACOES:
+        y_min = MARGEM_SPAWN_CORACAO
+        y_max = ALTURA_JANELA - TAMANHO_CORACAO - MARGEM_SPAWN_CORACAO
+        y = random.randint(y_min, y_max)
+        estado["coracoes"].append({ "x": LARGURA_JANELA + TAMANHO_CORACAO, "y": y })
+        estado["ultimo_spawn_coracao"] = agora
+
+    # Move e remove corações fora da tela
+    for cor in estado["coracoes"]:
+        cor["x"] -= estado["velocidade_obstaculo"] * delta_tempo
+    estado["coracoes"] = [
+        c for c in estado["coracoes"]
+        if c["x"] + TAMANHO_CORACAO > 0
+    ]
+
+    # Colisão jogador ↔ coração
+    rx, ry = estado["posicao_jogador"]
+    r_w, r_h = 30, 30  # mesma hitbox que obstacles
+    for cor in estado["coracoes"][:]:
+        cx, cy = cor["x"], cor["y"]
+        if (rx < cx + TAMANHO_CORACAO and rx + r_w > cx and
+            ry < cy + TAMANHO_CORACAO and ry + r_h > cy):
+            estado["coracoes"].remove(cor)
+            if estado["vidas"] < VIDAS_MAX:
+                estado["vidas"] += 1
+
+    return estado
+
 def atualizar_estado_jogo(janela, estado):
     tempo_atual = time.time()
     delta_tempo = tempo_atual - estado["ultimo_tempo"]
@@ -105,6 +137,9 @@ def atualizar_estado_jogo(janela, estado):
         LARGURA_JANELA, ALTURA_JANELA, estado["posicao_jogador"], estado["pontuacao"]
     )
 
+    estado = atualizar_coracoes(delta_tempo, estado)
+    return estado
+
 def resetar_estado():
     estado = {
         "posicao_jogador": [POSICAO_INICIAL_JOGADOR_X, ALTURA_JANELA // 2],
@@ -117,13 +152,15 @@ def resetar_estado():
         "vidas": VIDAS_INICIAIS,
         "ultimo_tempo": time.time(),
         "invencivel": False,
-        "tempo_invencivel": 0
+        "tempo_invencivel": 0,
+        "coracoes": [],
+        "ultimo_spawn_coracao": time.time(),
     }
     return estado
 
 def loop_do_jogo(janela, recursos, estado):
     while not glfw.window_should_close(janela) and estado["jogo_iniciado"]:
-        atualizar_estado_jogo(janela, estado)
+        estado = atualizar_estado_jogo(janela, estado)
 
         # Atualiza tempo de invencibilidade
         if estado["invencivel"]:

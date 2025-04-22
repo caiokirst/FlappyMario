@@ -88,7 +88,8 @@ def carregar_recursos():
     recursos = {
         "jogador": carregar_textura(CAMINHO_TEX_JOGADOR),
         "fundo": carregar_textura(CAMINHO_TEX_FUNDO),
-        "cano": carregar_textura(CAMINHO_TEX_CANO)
+        "cano": carregar_textura(CAMINHO_TEX_CANO),
+        "coracao": carregar_textura(CAMINHO_TEX_CORACAO),
     }
 
     # Verifica se alguma textura falhou ao carregar
