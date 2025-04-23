@@ -61,28 +61,6 @@ def aplicar_imagem_transparente(imagem, alpha):
     imagem.putdata(nova_imagem)
     return imagem
 
-
-def carregar_textura_transparente(caminho_imagem, alpha=1.0):
-    # Carrega a imagem usando Pillow
-    imagem = Image.open(caminho_imagem)
-
-    # Aplica a transparência
-    imagem_transparente = aplicar_imagem_transparente(imagem, alpha)
-
-    # Converte a imagem em uma textura OpenGL
-    largura, altura = imagem_transparente.size
-    imagem_transparente = imagem_transparente.tobytes("raw", "RGBA", 0, -1)
-
-    # Gerar uma textura OpenGL
-    tex_id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, tex_id)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, largura, altura, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagem_transparente)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-    return tex_id
-
-
 # Função para carregar todas as texturas necessárias para o jogo
 def carregar_recursos():
     recursos = {

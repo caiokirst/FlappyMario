@@ -6,7 +6,7 @@ import os
 import glfw
 import time
 
-from texturas import carregar_textura_transparente
+from texturas import *
 
 
 # --- Funções de Desenho 2D ---
@@ -156,10 +156,10 @@ def desenhar_jogo(janela, recursos, estado):
     glLoadIdentity()
     desenhar_fundo(recursos["fundo"])
 
-    # Piscando quando invencível
+    # —— calculo de alpha para invencibilidade ——
     if estado["invencivel"]:
         tempo_decorrido = time.time() - estado["tempo_invencivel"]
-        if tempo_decorrido > 2:  # Tempo de invencibilidade em segundos
+        if tempo_decorrido > 2:
             estado["invencivel"] = False
             alpha = 1.0
         else:
@@ -167,11 +167,14 @@ def desenhar_jogo(janela, recursos, estado):
     else:
         alpha = 1.0
 
-    # Recarregar a textura com a transparência adequada
-    recursos["jogador"] = carregar_textura_transparente(CAMINHO_TEX_JOGADOR, alpha)
-
-    # Desenha o jogador (com transparência se invencível)
-    desenhar_jogador(recursos["jogador"], estado["posicao_jogador"][0], estado["posicao_jogador"][1])
+    # Pisca-pisca de invencibilidade: altera o alpha da textura do jogador
+    # pega a posição do jogador
+    x, y = estado["posicao_jogador"]
+    # desenha o jogador com alpha
+    glColor4f(1.0, 1.0, 1.0, alpha)
+    desenhar_jogador(recursos["jogador"], x, y)
+    # desenha o jogador da cor normal
+    glColor4f(1.0, 1.0, 1.0, 1.0)
 
     for obstaculo in estado["obstaculos"]:
         desenhar_obstaculo_com_textura(obstaculo['x'], obstaculo['y_inferior'],
