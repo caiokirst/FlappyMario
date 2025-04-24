@@ -170,10 +170,8 @@ def desenhar_jogo(janela, recursos, estado):
     # Pisca-pisca de invencibilidade: altera o alpha da textura do jogador
     # pega a posição do jogador
     x, y = estado["posicao_jogador"]
-    # desenha o jogador com alpha
     glColor4f(1.0, 1.0, 1.0, alpha)
     desenhar_jogador(recursos["jogador"], x, y)
-    # desenha o jogador da cor normal
     glColor4f(1.0, 1.0, 1.0, 1.0)
 
     for obstaculo in estado["obstaculos"]:

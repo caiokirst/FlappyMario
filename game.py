@@ -5,17 +5,6 @@ from logica import *
 from drawers import *
 from highscore import *
 
-#Bibliotecas utilizadas:
-# pip install glfw PyOpenGL Pillow
-
-# Variáveis globais
-posicao_jogador = [POSICAO_INICIAL_JOGADOR_X, POSICAO_INICIAL_JOGADOR_Y]
-gravidade = GRAVIDADE
-velocidade_pulo = VELOCIDADE_PULO
-velocidade_obstaculo = VELOCIDADE_OBSTACULO
-espaco_entre_obstaculos = ESPACO_ENTRE_OBSTACULOS
-vidas = VIDAS_INICIAIS
-
 # Função principal
 def main():
     criar_arquivo_highscore()
