@@ -33,7 +33,7 @@ cd FlappyMario
 ```
 **Instale as dependências**
 ```
-pip install glfw PyOpenGL Pillow
+pip install -r requirements.txt
 ```
 **Execute o jogo**
 ```
@@ -48,7 +48,7 @@ cd FlappyMario
 ```
 **Instale as dependências**
 ```
-pip install glfw PyOpenGL Pillow
+pip install -r requirements.txt
 ```
 **Execute o jogo**
 ```
